@@ -224,7 +224,7 @@
         <entry name="WindowGlide" type="Bool">
             <label>Glide windows after flicking</label>
             <whatsthis>When a window is dragged quickly and released, it keeps gliding on the canvas and slows down smoothly, like the canvas itself.</whatsthis>
-            <default>true</default>
+            <default>false</default>
         </entry>
         <entry name="ClickZoomedWindowFocuses" type="Bool">
             <label>Click a window while zoomed to open it</label>
