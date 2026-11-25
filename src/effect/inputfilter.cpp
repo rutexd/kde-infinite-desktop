@@ -557,16 +557,13 @@ bool CanvasInputFilter::handleButton(KWin::PointerButtonEvent *event)
         }
     }
     if (canvas->interactions == 0 && (canvas->motion.isActive() || (!canvas->navigation && m_effect->isDirty(*canvas)))) {
-        // The canvas is still moving (gliding, animating). KWin has already picked the
-        // pointer focus for this press from the old window positions, so it cannot reach
-        // the window the user sees. Like touching a scrolling list, this press only
-        // stops the motion; the next one goes to the right window.
+        // The canvas is still moving (gliding, animating). Stop it in place, then
+        // handle this press normally instead of swallowing it, so the user can
+        // stop the animation and grab/move a window in a single click.
         m_effect->stopMotion(*canvas);
         if (!canvas->navigation) {
             m_effect->commitIfDirty(*canvas);
         }
-        m_swallowRelease = event->button;
-        return true;
     }
     if (m_effect->hasForeignOverlap() && m_effect->resolveForeignOverlap(pos, output)) {
         // KWin had already chosen the hidden window of the other screen as the target.
@@ -580,6 +577,11 @@ bool CanvasInputFilter::handleButton(KWin::PointerButtonEvent *event)
     const QRectF viewport = rectOf(output);
 
     const auto startWindowDrag = [&](DragKind kind) {
+        // Stop any running canvas animation so the dragged window does not drift.
+        m_effect->stopMotion(*canvas);
+        if (!canvas->navigation) {
+            m_effect->commitIfDirty(*canvas);
+        }
         m_drag = Drag{};
         m_drag.kind = kind;
         m_drag.button = event->button;

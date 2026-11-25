@@ -1186,6 +1186,13 @@ void InfiniteDesktopEffect::slotStartUserMovedResized(KWin::EffectWindow *w)
         // after the cancel (_NET_WM_MOVERESIZE); that one is cancelled too, otherwise KWin
         // and the plugin would both move it, and its end would put the window elsewhere.
         managed->moveTakenOver = true;
+        // Stop any running canvas animation so the window does not drift while being moved.
+        if (Canvas *canvas = canvasByKey(managed->canvasKey)) {
+            stopMotion(*canvas);
+            if (!canvas->navigation) {
+                commitIfDirty(*canvas);
+            }
+        }
         QPointer<KWin::Window> client = managed->window;
         QTimer::singleShot(0, this, [client]() {
             if (client && client->isInteractiveMove()) {
@@ -1197,6 +1204,13 @@ void InfiniteDesktopEffect::slotStartUserMovedResized(KWin::EffectWindow *w)
     }
     // Pinned windows are moved like on a normal desktop: no screen fling, no edge scrolling.
     if (w->isUserMove() && !isPinned(*managed)) {
+        // Stop any running canvas animation so the window does not drift while being moved.
+        if (Canvas *canvas = canvasByKey(managed->canvasKey)) {
+            stopMotion(*canvas);
+            if (!canvas->navigation) {
+                commitIfDirty(*canvas);
+            }
+        }
         m_move = MoveState{managed->window, managed, managed->window->output(), KWin::effects->cursorPos()};
         if (m_settings.edgePan && isOperational() && !m_paused) {
             suspendElectricBorders();
