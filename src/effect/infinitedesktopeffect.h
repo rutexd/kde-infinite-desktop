@@ -75,6 +75,7 @@ struct EffectSettings
     bool momentum = true;
     qreal friction = 5.0;
     std::chrono::milliseconds animationDuration{280};
+    bool passClickThroughAnimation = true;
     qreal keyboardPanStep = 0.25;
     bool revealOnActivate = true;
     RevealMode revealMode = RevealMode::Minimal;

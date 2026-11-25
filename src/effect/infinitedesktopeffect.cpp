@@ -116,16 +116,36 @@ Qt::KeyboardModifiers panModifiersFromConfig(int value)
 {
     using E = InfiniteDesktopConfig::EnumPanModifier;
     switch (value) {
-    case E::MetaAlt:
-        return Qt::MetaModifier | Qt::AltModifier;
+    case E::Meta:
+        return Qt::MetaModifier;
+    case E::Ctrl:
+        return Qt::ControlModifier;
+    case E::Alt:
+        return Qt::AltModifier;
+    case E::Shift:
+        return Qt::ShiftModifier;
     case E::MetaCtrl:
         return Qt::MetaModifier | Qt::ControlModifier;
+    case E::MetaAlt:
+        return Qt::MetaModifier | Qt::AltModifier;
     case E::MetaShift:
         return Qt::MetaModifier | Qt::ShiftModifier;
     case E::CtrlAlt:
         return Qt::ControlModifier | Qt::AltModifier;
-    case E::Meta:
-        return Qt::MetaModifier;
+    case E::CtrlShift:
+        return Qt::ControlModifier | Qt::ShiftModifier;
+    case E::AltShift:
+        return Qt::AltModifier | Qt::ShiftModifier;
+    case E::MetaCtrlAlt:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::AltModifier;
+    case E::MetaCtrlShift:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::ShiftModifier;
+    case E::MetaAltShift:
+        return Qt::MetaModifier | Qt::AltModifier | Qt::ShiftModifier;
+    case E::CtrlAltShift:
+        return Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier;
+    case E::MetaCtrlAltShift:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier;
     default:
         return Qt::NoModifier;
     }
@@ -137,12 +157,34 @@ Qt::KeyboardModifiers zoomModifiersFromConfig(int value)
     switch (value) {
     case E::Meta:
         return Qt::MetaModifier;
+    case E::Ctrl:
+        return Qt::ControlModifier;
+    case E::Alt:
+        return Qt::AltModifier;
+    case E::Shift:
+        return Qt::ShiftModifier;
+    case E::MetaCtrl:
+        return Qt::MetaModifier | Qt::ControlModifier;
     case E::MetaAlt:
         return Qt::MetaModifier | Qt::AltModifier;
     case E::MetaShift:
         return Qt::MetaModifier | Qt::ShiftModifier;
     case E::CtrlAlt:
         return Qt::ControlModifier | Qt::AltModifier;
+    case E::CtrlShift:
+        return Qt::ControlModifier | Qt::ShiftModifier;
+    case E::AltShift:
+        return Qt::AltModifier | Qt::ShiftModifier;
+    case E::MetaCtrlAlt:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::AltModifier;
+    case E::MetaCtrlShift:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::ShiftModifier;
+    case E::MetaAltShift:
+        return Qt::MetaModifier | Qt::AltModifier | Qt::ShiftModifier;
+    case E::CtrlAltShift:
+        return Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier;
+    case E::MetaCtrlAltShift:
+        return Qt::MetaModifier | Qt::ControlModifier | Qt::AltModifier | Qt::ShiftModifier;
     default:
         return Qt::NoModifier;
     }
@@ -360,6 +402,7 @@ void InfiniteDesktopEffect::loadSettings()
     s.momentum = config->momentum();
     s.friction = std::clamp(config->friction(), 1, 20);
     s.animationDuration = std::chrono::milliseconds(std::clamp(config->animationDuration(), 0, 2000));
+    s.passClickThroughAnimation = config->passClickThroughAnimation();
     s.keyboardPanStep = std::clamp(config->keyboardPanStep(), 5, 100) / 100.0;
     s.revealOnActivate = config->revealOnActivate();
     s.revealMode = config->revealMode() == InfiniteDesktopConfig::EnumRevealMode::Center ? RevealMode::Center : RevealMode::Minimal;

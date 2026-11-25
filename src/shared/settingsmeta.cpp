@@ -57,6 +57,7 @@ const QList<SettingsEntryMeta> &settingsEntries()
         {"Momentum", "zoom", nullptr, kli18n("inertia,kinetic,flick,glide"), nullptr},
         {"Friction", "zoom", nullptr, kli18n("inertia,kinetic,deceleration,stop"), "Momentum"},
         {"AnimationDuration", "zoom", "ms", kli18n("speed,animation,transition,time"), nullptr},
+        {"PassClickThroughAnimation", "zoom", nullptr, kli18n("click,animation,glide,stop,motion,pass"), nullptr},
         {"KeyboardPanStep", "zoom", "%", kli18n("keyboard,arrow,step,distance"), nullptr},
         // Windows
         {"RevealOnActivate", "windows", nullptr, kli18n("taskbar,alt tab,activate,follow,jump"), nullptr},

@@ -31,11 +31,21 @@
             <whatsthis>Hold these keys and drag with the left mouse button to pan the canvas, even on top of windows. Note: Meta alone is used by KWin to move windows.</whatsthis>
             <choices>
                 <choice name="Disabled"><label>Disabled</label></choice>
-                <choice name="MetaAlt"><label>Meta + Alt</label></choice>
+                <choice name="Meta"><label>Meta</label></choice>
+                <choice name="Ctrl"><label>Ctrl</label></choice>
+                <choice name="Alt"><label>Alt</label></choice>
+                <choice name="Shift"><label>Shift</label></choice>
                 <choice name="MetaCtrl"><label>Meta + Ctrl</label></choice>
+                <choice name="MetaAlt"><label>Meta + Alt</label></choice>
                 <choice name="MetaShift"><label>Meta + Shift</label></choice>
                 <choice name="CtrlAlt"><label>Ctrl + Alt</label></choice>
-                <choice name="Meta"><label>Meta</label></choice>
+                <choice name="CtrlShift"><label>Ctrl + Shift</label></choice>
+                <choice name="AltShift"><label>Alt + Shift</label></choice>
+                <choice name="MetaCtrlAlt"><label>Meta + Ctrl + Alt</label></choice>
+                <choice name="MetaCtrlShift"><label>Meta + Ctrl + Shift</label></choice>
+                <choice name="MetaAltShift"><label>Meta + Alt + Shift</label></choice>
+                <choice name="CtrlAltShift"><label>Ctrl + Alt + Shift</label></choice>
+                <choice name="MetaCtrlAltShift"><label>Meta + Ctrl + Alt + Shift</label></choice>
             </choices>
             <default>MetaAlt</default>
         </entry>
@@ -50,9 +60,20 @@
             <choices>
                 <choice name="Disabled"><label>Disabled</label></choice>
                 <choice name="Meta"><label>Meta</label></choice>
+                <choice name="Ctrl"><label>Ctrl</label></choice>
+                <choice name="Alt"><label>Alt</label></choice>
+                <choice name="Shift"><label>Shift</label></choice>
+                <choice name="MetaCtrl"><label>Meta + Ctrl</label></choice>
                 <choice name="MetaAlt"><label>Meta + Alt</label></choice>
                 <choice name="MetaShift"><label>Meta + Shift</label></choice>
                 <choice name="CtrlAlt"><label>Ctrl + Alt</label></choice>
+                <choice name="CtrlShift"><label>Ctrl + Shift</label></choice>
+                <choice name="AltShift"><label>Alt + Shift</label></choice>
+                <choice name="MetaCtrlAlt"><label>Meta + Ctrl + Alt</label></choice>
+                <choice name="MetaCtrlShift"><label>Meta + Ctrl + Shift</label></choice>
+                <choice name="MetaAltShift"><label>Meta + Alt + Shift</label></choice>
+                <choice name="CtrlAltShift"><label>Ctrl + Alt + Shift</label></choice>
+                <choice name="MetaCtrlAltShift"><label>Meta + Ctrl + Alt + Shift</label></choice>
             </choices>
             <default>Meta</default>
         </entry>
@@ -156,6 +177,11 @@
             <default>280</default>
             <min>0</min>
             <max>2000</max>
+        </entry>
+        <entry name="PassClickThroughAnimation" type="Bool">
+            <label>Pass clicks through a running animation</label>
+            <whatsthis>When the canvas is still gliding or animating, a click stops the motion and is also delivered to the window under the pointer in the same click, instead of only stopping the motion.</whatsthis>
+            <default>true</default>
         </entry>
         <entry name="KeyboardPanStep" type="Int">
             <label>Keyboard pan step</label>

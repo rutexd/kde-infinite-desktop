@@ -564,6 +564,10 @@ bool CanvasInputFilter::handleButton(KWin::PointerButtonEvent *event)
         if (!canvas->navigation) {
             m_effect->commitIfDirty(*canvas);
         }
+        if (!m_effect->settings().passClickThroughAnimation) {
+            m_swallowRelease = event->button;
+            return true;
+        }
     }
     if (m_effect->hasForeignOverlap() && m_effect->resolveForeignOverlap(pos, output)) {
         // KWin had already chosen the hidden window of the other screen as the target.
