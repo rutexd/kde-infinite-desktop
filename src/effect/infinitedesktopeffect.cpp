@@ -400,6 +400,7 @@ void InfiniteDesktopEffect::loadSettings()
     s.snapZoomToOne = config->snapZoomToOne();
     s.sharpZoomedContent = config->sharpZoomedContent();
     s.momentum = config->momentum();
+    s.windowGlide = config->windowGlide();
     s.friction = std::clamp(config->friction(), 1, 20);
     s.animationDuration = std::chrono::milliseconds(std::clamp(config->animationDuration(), 0, 2000));
     s.passClickThroughAnimation = config->passClickThroughAnimation();
@@ -1103,6 +1104,10 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
         if (!canvas || !isCurrentCanvas(*canvas) || canvas->interactions > 0) {
             return;
         }
+        // Just stopped a glide by clicking the window: do not immediately re-reveal/animate.
+        if (Clock::now() - managed->lastGlideStop < std::chrono::milliseconds(1500)) {
+            return;
+        }
         if (canvas->navigation && managed->mappedAt && Clock::now() - *managed->mappedAt < NewWindowActivation) {
             // A window activating itself as it opens (Steam, Wine/Proton launchers): whether
             // that ends the zoom is up to the new window rule (adoptWindow), not to this one.
@@ -1229,6 +1234,7 @@ void InfiniteDesktopEffect::slotStartUserMovedResized(KWin::EffectWindow *w)
         // after the cancel (_NET_WM_MOVERESIZE); that one is cancelled too, otherwise KWin
         // and the plugin would both move it, and its end would put the window elsewhere.
         managed->moveTakenOver = true;
+        managed->gliding = false;
         // Stop any running canvas animation so the window does not drift while being moved.
         if (Canvas *canvas = canvasByKey(managed->canvasKey)) {
             stopMotion(*canvas);
@@ -1247,6 +1253,10 @@ void InfiniteDesktopEffect::slotStartUserMovedResized(KWin::EffectWindow *w)
     }
     // Pinned windows are moved like on a normal desktop: no screen fling, no edge scrolling.
     if (w->isUserMove() && !isPinned(*managed)) {
+        managed->gliding = false;
+        if (m_inputFilter) {
+            m_inputFilter->resetMoveTracker();
+        }
         // Stop any running canvas animation so the window does not drift while being moved.
         if (Canvas *canvas = canvasByKey(managed->canvasKey)) {
             stopMotion(*canvas);
@@ -1319,6 +1329,14 @@ void InfiniteDesktopEffect::slotFinishUserMovedResized(KWin::EffectWindow *w)
     const Camera reference{canvas.camera.center, canvas.navigation ? 1.0 : canvas.camera.zoom};
     managed->canvasPos = reference.screenToCanvas(toQRectF(w->frameGeometry()).topLeft(), outputRect(output));
     managed->parked = false;
+    managed->gliding = false;
+    // Flick inertia for a window moved on the canvas (Meta+drag).
+    if (wasMove && m_settings.momentum && m_settings.windowGlide && m_inputFilter && m_inputFilter->moveHadMotion()) {
+        const QPointF velocity = m_inputFilter->moveFlingVelocity();
+        if (!velocity.isNull()) {
+            startWindowGlide(*managed, canvas, velocity);
+        }
+    }
 
     if (isOperational()) {
         if (canvas.navigation) {
@@ -1945,6 +1963,32 @@ void InfiniteDesktopEffect::advanceAnimations(KWin::LogicalOutput *output, TimeP
                 });
             }
         }
+        // Glide individual windows that were flicked.
+        for (auto &[w, managed] : m_windows) {
+            if (!managed || !managed->gliding || managed->canvasKey != canvas.key) {
+                continue;
+            }
+            const qreal seconds = std::min(std::chrono::duration<qreal>(now - managed->glideStart).count(), managed->glideDuration);
+            if (seconds <= 0.0) {
+                managed->canvasPos = managed->glideStartPos;
+                continue;
+            }
+            const qreal factor = (1.0 - std::exp(-managed->glideFriction * seconds)) / managed->glideFriction;
+            managed->canvasPos = managed->glideStartPos + managed->glideVelocity * factor;
+            canvas.lastActivity = now;
+            if (std::chrono::duration<qreal>(now - managed->glideStart).count() >= managed->glideDuration) {
+                const qreal f = (1.0 - std::exp(-managed->glideFriction * managed->glideDuration)) / managed->glideFriction;
+                managed->canvasPos = managed->glideStartPos + managed->glideVelocity * f;
+                managed->gliding = false;
+                const QString key = canvas.key;
+                QTimer::singleShot(0, this, [this, key]() {
+                    if (Canvas *c = canvasByKey(key)) {
+                        commit(*c);
+                        updateActivity();
+                    }
+                });
+            }
+        }
         if (!canvas.edgePanVelocity.isNull()) {
             const qreal seconds = std::clamp(std::chrono::duration<qreal>(now - canvas.lastEdgePanTick).count(), 0.0, 0.05);
             canvas.lastEdgePanTick = now;
@@ -2201,6 +2245,40 @@ void InfiniteDesktopEffect::moveWindowOnCanvas(ManagedWindow &window, Canvas &ca
     }
     window.canvasPos = canvasPos;
     noteActivity(canvas);
+    updateActivity();
+    requestRepaint(canvas);
+}
+
+void InfiniteDesktopEffect::stopWindowGlides(Canvas &canvas)
+{
+    for (auto &[w, managed] : m_windows) {
+        if (managed && managed->canvasKey == canvas.key) {
+            if (managed->gliding) {
+                managed->lastGlideStop = Clock::now();
+            }
+            managed->gliding = false;
+        }
+    }
+    if (!canvas.navigation) {
+        commit(canvas);
+    }
+}
+
+void InfiniteDesktopEffect::startWindowGlide(ManagedWindow &window, Canvas &canvas, const QPointF &screenVelocity)
+{
+    if (!m_settings.momentum || !m_settings.windowGlide) {
+        return;
+    }
+    const qreal speed = std::hypot(screenVelocity.x(), screenVelocity.y()) / std::max(canvas.camera.zoom, 0.001);
+    if (!std::isfinite(speed) || speed < CameraMotion::MinimumGlideSpeed * 2.0) {
+        return;
+    }
+    window.glideFriction = std::max(m_settings.friction, 0.1);
+    window.glideVelocity = screenVelocity / std::max(canvas.camera.zoom, 0.001);
+    window.glideStartPos = window.canvasPos;
+    window.glideStart = Clock::now();
+    window.glideDuration = std::log(speed / CameraMotion::MinimumGlideSpeed) / window.glideFriction;
+    window.gliding = true;
     updateActivity();
     requestRepaint(canvas);
 }

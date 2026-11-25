@@ -83,6 +83,9 @@ public:
     bool takeOverClientMove(ManagedWindow &window);
     /// The plugin is moving @p w on the canvas (a drag of the pointer, maybe taken over).
     bool isMovingWindow(const KWin::EffectWindow *w) const;
+    QPointF moveFlingVelocity() const;
+    bool moveHadMotion() const { return m_moveHadMotion; }
+    void resetMoveTracker();
 
 private:
     enum class DragKind {
@@ -143,6 +146,7 @@ private:
     Drag m_drag;
     VelocityTracker m_moveTracker;
     QPointer<KWin::Window> m_trackedMove;
+    bool m_moveHadMotion = false;
 
     struct
     {

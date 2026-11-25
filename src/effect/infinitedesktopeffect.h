@@ -73,6 +73,7 @@ struct EffectSettings
     bool snapZoomToOne = true;
     bool sharpZoomedContent = true;
     bool momentum = true;
+    bool windowGlide = true;
     qreal friction = 5.0;
     std::chrono::milliseconds animationDuration{280};
     bool passClickThroughAnimation = true;
@@ -226,6 +227,15 @@ struct ManagedWindow
     QString canvasKey;
     /// Frame top left in canvas coordinates.
     QPointF canvasPos;
+    /// Glide state for the window after a flick (mirrors CameraMotion, but for a point).
+    QPointF glideVelocity{};
+    /// When the window's glide was last stopped (click), to suppress immediate re-reveal.
+    TimePoint lastGlideStop{};
+    QPointF glideStartPos{};
+    TimePoint glideStart{};
+    qreal glideFriction = 5.0;
+    qreal glideDuration = 0.0;
+    bool gliding = false;
     /// Physically moved into the void outside of all outputs.
     bool parked = false;
     /// Pinned to the screen with the "Pin Window to Screen" shortcuts.
@@ -422,6 +432,8 @@ public:
 
     // Window operations
     void moveWindowOnCanvas(ManagedWindow &window, Canvas &canvas, const QPointF &canvasPos);
+    void startWindowGlide(ManagedWindow &window, Canvas &canvas, const QPointF &screenVelocity);
+    void stopWindowGlides(Canvas &canvas);
     void moveTileOnCanvas(ManagedWindow &window, Canvas &canvas, const QPointF &canvasPos);
     /// Resize zone of a zoomed out window under @p pos (screen coordinates), none if not resizable.
     Qt::Edges resizeEdgesAt(const ManagedWindow &window, const Canvas &canvas, const QPointF &pos) const;

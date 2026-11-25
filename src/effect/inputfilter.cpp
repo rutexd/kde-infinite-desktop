@@ -445,6 +445,13 @@ bool CanvasInputFilter::finishDrag(KWin::PointerButtonEvent *event)
             // Re-look the window up: committing may have changed the bookkeeping.
             if (ManagedWindow *moved = drag.window ? m_effect->findManaged(drag.window.data()) : nullptr) {
                 m_effect->windowArranged(*moved);
+                // Flick inertia for the dragged window (mirrors the canvas glide).
+                if (m_effect->settings().momentum && m_effect->settings().windowGlide) {
+                    const QPointF velocity = drag.tracker.flingVelocity(event->timestamp, 100.0);
+                    if (Canvas *c = m_effect->canvasByKey(drag.canvasKey)) {
+                        m_effect->startWindowGlide(*moved, *c, velocity);
+                    }
+                }
             }
         }
         return true;
@@ -542,6 +549,8 @@ bool CanvasInputFilter::handleButton(KWin::PointerButtonEvent *event)
     if (!canvas) {
         return false;
     }
+    // A click also stops any gliding windows on this canvas.
+    m_effect->stopWindowGlides(*canvas);
 
     // From now on, what the user sees must be where KWin delivers the input.
     if (m_scroll.active) {
@@ -561,6 +570,7 @@ bool CanvasInputFilter::handleButton(KWin::PointerButtonEvent *event)
         // handle this press normally instead of swallowing it, so the user can
         // stop the animation and grab/move a window in a single click.
         m_effect->stopMotion(*canvas);
+        m_effect->stopWindowGlides(*canvas);
         if (!canvas->navigation) {
             m_effect->commitIfDirty(*canvas);
         }
@@ -961,6 +971,7 @@ bool CanvasInputFilter::handleInteractiveMove(KWin::PointerMotionEvent *event)
         m_moveTracker.reset();
     }
     if (!event->warp) {
+        m_moveHadMotion = true;
         // Hand speed, independent of the warps that hold the pointer at an edge.
         // Relative devices: accumulate their deltas. Absolute devices (tablets,
         // remote desktop, VMs) report no delta, but their raw position already is
@@ -1002,6 +1013,20 @@ bool CanvasInputFilter::handleInteractiveMove(KWin::PointerMotionEvent *event)
 // ============================================================================
 // Keyboard
 // ============================================================================
+
+QPointF CanvasInputFilter::moveFlingVelocity() const
+{
+    if (!m_trackedMove) {
+        return QPointF();
+    }
+    return m_moveTracker.flingVelocity(m_moveTracker.lastSampleTime(), 100.0);
+}
+
+void CanvasInputFilter::resetMoveTracker()
+{
+    m_moveTracker.reset();
+    m_moveHadMotion = false;
+}
 
 bool CanvasInputFilter::keyboardKey(KWin::KeyboardKeyEvent *event)
 {

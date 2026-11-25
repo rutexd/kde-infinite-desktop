@@ -64,6 +64,7 @@ const QList<SettingsEntryMeta> &settingsEntries()
         {"RevealMode", "windows", nullptr, kli18n("center,scroll,follow"), "RevealOnActivate"},
         {"NewWindowsExitZoom", "windows", nullptr, kli18n("open,launch,new,zoom"), nullptr},
         {"InteractWhileZoomed", "windows", nullptr, kli18n("interact,use,type,click,scroll,zoomed,overview,notes"), nullptr},
+        {"WindowGlide", "windows", nullptr, kli18n("glide,inertia,flick,window,motion"), nullptr},
         {"ClickZoomedWindowFocuses", "windows", nullptr, kli18n("click,overview,open,focus"), nullptr},
         {"PinOnAllDesktops", "windows", nullptr, kli18n("sticky,picture in picture,pip,fixed"), nullptr},
         {"PinKeepAboveWindows", "windows", nullptr, kli18n("pin,always on top,keep above,fixed,sticky"), nullptr},

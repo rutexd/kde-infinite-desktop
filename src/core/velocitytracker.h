@@ -51,6 +51,13 @@ public:
     {
         return m_count == 0;
     }
+    Time lastSampleTime() const
+    {
+        if (m_count == 0) {
+            return Time{};
+        }
+        return m_samples[(m_head + Capacity - 1) % Capacity].time;
+    }
 
 private:
     struct Sample

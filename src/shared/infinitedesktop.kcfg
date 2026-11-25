@@ -216,6 +216,11 @@
             <whatsthis>While zoomed out, clicks, scrolling and typing go to the window under the pointer, so you can quickly take a note or move a file without returning to 100 %. Drag the title bar, or any part of the window while holding Meta, to move it on the canvas; drag its edges to resize it. Double-click the title bar to return to 100 %.</whatsthis>
             <default>true</default>
         </entry>
+        <entry name="WindowGlide" type="Bool">
+            <label>Glide windows after flicking</label>
+            <whatsthis>When a window is dragged quickly and released, it keeps gliding on the canvas and slows down smoothly, like the canvas itself.</whatsthis>
+            <default>true</default>
+        </entry>
         <entry name="ClickZoomedWindowFocuses" type="Bool">
             <label>Click a window while zoomed to open it</label>
             <whatsthis>While zoomed out, a click on a window zooms back to 100 % on that window and focuses it. Dragging a window moves it on the canvas. Only used when "Use windows while zoomed out" is off.</whatsthis>
