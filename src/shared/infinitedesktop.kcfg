@@ -197,6 +197,11 @@
             <whatsthis>When a window outside the visible area is activated, for example from the task bar or with Alt+Tab, the canvas moves so that the window becomes visible.</whatsthis>
             <default>true</default>
         </entry>
+        <entry name="RevealOnWindowClick" type="Bool">
+            <label>Reveal window on click</label>
+            <whatsthis>When clicking a window, move the camera to it as well, not only when switching via Alt+Tab or the task bar.</whatsthis>
+            <default>false</default>
+        </entry>
         <entry name="RevealMode" type="Enum">
             <label>How windows are brought into view</label>
             <whatsthis>"Scroll just enough" moves the canvas as little as possible. "Center" always puts the window in the middle of the screen.</whatsthis>

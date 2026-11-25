@@ -61,6 +61,7 @@ const QList<SettingsEntryMeta> &settingsEntries()
         {"KeyboardPanStep", "zoom", "%", kli18n("keyboard,arrow,step,distance"), nullptr},
         // Windows
         {"RevealOnActivate", "windows", nullptr, kli18n("taskbar,alt tab,activate,follow,jump"), nullptr},
+        {"RevealOnWindowClick", "windows", nullptr, kli18n("click,activate,follow,jump,window"), "RevealOnActivate"},
         {"RevealMode", "windows", nullptr, kli18n("center,scroll,follow"), "RevealOnActivate"},
         {"NewWindowsExitZoom", "windows", nullptr, kli18n("open,launch,new,zoom"), nullptr},
         {"InteractWhileZoomed", "windows", nullptr, kli18n("interact,use,type,click,scroll,zoomed,overview,notes"), nullptr},

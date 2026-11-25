@@ -79,6 +79,7 @@ struct EffectSettings
     bool passClickThroughAnimation = true;
     qreal keyboardPanStep = 0.25;
     bool revealOnActivate = true;
+    bool revealOnWindowClick = false;
     RevealMode revealMode = RevealMode::Minimal;
     bool newWindowsExitZoom = true;
     bool interactWhileZoomed = true;

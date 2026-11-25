@@ -406,6 +406,7 @@ void InfiniteDesktopEffect::loadSettings()
     s.passClickThroughAnimation = config->passClickThroughAnimation();
     s.keyboardPanStep = std::clamp(config->keyboardPanStep(), 5, 100) / 100.0;
     s.revealOnActivate = config->revealOnActivate();
+    s.revealOnWindowClick = config->revealOnWindowClick();
     s.revealMode = config->revealMode() == InfiniteDesktopConfig::EnumRevealMode::Center ? RevealMode::Center : RevealMode::Minimal;
     s.newWindowsExitZoom = config->newWindowsExitZoom();
     s.interactWhileZoomed = config->interactWhileZoomed();
@@ -1087,7 +1088,7 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
     // A click into a window activates it while the button is still held: do not
     // move the canvas under the user's fingers. Task bar and Alt+Tab activation
     // happen without a held button.
-    if (KWin::input()->qtButtonStates() != Qt::NoButton) {
+    if (!m_settings.revealOnWindowClick && KWin::input()->qtButtonStates() != Qt::NoButton) {
         return;
     }
     QPointer<KWin::EffectWindow> guard(w);
