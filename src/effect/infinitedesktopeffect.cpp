@@ -406,6 +406,7 @@ void InfiniteDesktopEffect::loadSettings()
     s.passClickThroughAnimation = config->passClickThroughAnimation();
     s.keyboardPanStep = std::clamp(config->keyboardPanStep(), 5, 100) / 100.0;
     s.revealOnActivate = config->revealOnActivate();
+    s.restorePreviousWindowOnClose = config->restorePreviousWindowOnClose();
     s.revealOnWindowClick = config->revealOnWindowClick();
     s.revealMode = config->revealMode() == InfiniteDesktopConfig::EnumRevealMode::Center ? RevealMode::Center : RevealMode::Minimal;
     s.newWindowsExitZoom = config->newWindowsExitZoom();
@@ -1049,6 +1050,7 @@ void InfiniteDesktopEffect::slotWindowAdded(KWin::EffectWindow *w)
 
 void InfiniteDesktopEffect::slotWindowClosed(KWin::EffectWindow *w)
 {
+    const bool wasActive = (m_lastActivatedWindow == w);
     if (ManagedWindow *managed = record(w)) {
         if (isOperational()) {
             rememberPlacement(*managed);
@@ -1064,6 +1066,16 @@ void InfiniteDesktopEffect::slotWindowClosed(KWin::EffectWindow *w)
             restoreElectricBorders();
             stopEdgePan();
         }
+    }
+    if (m_settings.restorePreviousWindowOnClose && wasActive && m_previousActiveWindow) {
+        QPointer<KWin::EffectWindow> guard = m_previousActiveWindow;
+        QTimer::singleShot(0, this, [this, guard]() {
+            if (guard && KWin::effects->activeWindow() != guard.data()) {
+                KWin::effects->activateWindow(guard.data());
+            }
+        });
+        m_lastActivatedWindow = m_previousActiveWindow;
+        m_previousActiveWindow.clear();
     }
     updateActivity();
     repaintClosingWindows();
@@ -1081,6 +1093,10 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
     if (!w || !isOperational() || !m_settings.revealOnActivate) {
         return;
     }
+    if (m_lastActivatedWindow && m_lastActivatedWindow != w) {
+        m_previousActiveWindow = m_lastActivatedWindow;
+    }
+    m_lastActivatedWindow = w;
     ManagedWindow *managed = record(w);
     if (!managed || modeOf(*managed) != WindowMode::Canvas) {
         return;

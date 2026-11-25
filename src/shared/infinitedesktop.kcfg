@@ -197,6 +197,11 @@
             <whatsthis>When a window outside the visible area is activated, for example from the task bar or with Alt+Tab, the canvas moves so that the window becomes visible.</whatsthis>
             <default>true</default>
         </entry>
+        <entry name="RestorePreviousWindowOnClose" type="Bool">
+            <label>Return to previous window on close</label>
+            <whatsthis>When a window that was activated (for example a newly opened one) closes, the camera returns to the window that was active before it.</whatsthis>
+            <default>false</default>
+        </entry>
         <entry name="RevealOnWindowClick" type="Bool">
             <label>Reveal window on click</label>
             <whatsthis>When clicking a window, move the camera to it as well, not only when switching via Alt+Tab or the task bar.</whatsthis>

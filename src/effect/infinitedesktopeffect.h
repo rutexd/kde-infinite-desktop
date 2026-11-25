@@ -79,6 +79,7 @@ struct EffectSettings
     bool passClickThroughAnimation = true;
     qreal keyboardPanStep = 0.25;
     bool revealOnActivate = true;
+    bool restorePreviousWindowOnClose = true;
     bool revealOnWindowClick = false;
     RevealMode revealMode = RevealMode::Minimal;
     bool newWindowsExitZoom = true;
@@ -636,6 +637,8 @@ private:
     KWin::Region m_paintRegion;
     bool m_canvasLayerPainted = false;
     std::optional<MoveState> m_move;
+    QPointer<KWin::EffectWindow> m_previousActiveWindow;
+    QPointer<KWin::EffectWindow> m_lastActivatedWindow;
     struct ElectricBorders
     {
         bool tiling;
