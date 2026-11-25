@@ -407,6 +407,7 @@ void InfiniteDesktopEffect::loadSettings()
     s.keyboardPanStep = std::clamp(config->keyboardPanStep(), 5, 100) / 100.0;
     s.revealOnActivate = config->revealOnActivate();
     s.restorePreviousWindowOnClose = config->restorePreviousWindowOnClose();
+    s.activeWindowHistorySize = std::clamp(config->activeWindowHistorySize(), 1, 20);
     s.revealOnWindowClick = config->revealOnWindowClick();
     s.revealMode = config->revealMode() == InfiniteDesktopConfig::EnumRevealMode::Center ? RevealMode::Center : RevealMode::Minimal;
     s.newWindowsExitZoom = config->newWindowsExitZoom();
@@ -1067,15 +1068,26 @@ void InfiniteDesktopEffect::slotWindowClosed(KWin::EffectWindow *w)
             stopEdgePan();
         }
     }
-    if (m_settings.restorePreviousWindowOnClose && wasActive && m_previousActiveWindow) {
-        QPointer<KWin::EffectWindow> guard = m_previousActiveWindow;
-        QTimer::singleShot(0, this, [this, guard]() {
-            if (guard && KWin::effects->activeWindow() != guard.data()) {
-                KWin::effects->activateWindow(guard.data());
+    if (m_settings.restorePreviousWindowOnClose && wasActive) {
+        // Pop the stack until we find a still-alive window.
+        QPointer<KWin::EffectWindow> guard;
+        while (!m_activeWindowStack.isEmpty()) {
+            QPointer<KWin::EffectWindow> candidate = m_activeWindowStack.takeLast();
+            if (candidate) {
+                guard = candidate;
+                break;
             }
-        });
-        m_lastActivatedWindow = m_previousActiveWindow;
-        m_previousActiveWindow.clear();
+        }
+        if (guard) {
+            QTimer::singleShot(0, this, [this, guard]() {
+                if (guard && KWin::effects->activeWindow() != guard.data()) {
+                    KWin::effects->activateWindow(guard.data());
+                }
+            });
+            m_lastActivatedWindow = guard;
+        } else {
+            m_lastActivatedWindow.clear();
+        }
     }
     updateActivity();
     repaintClosingWindows();
@@ -1094,8 +1106,15 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
         return;
     }
     if (m_lastActivatedWindow && m_lastActivatedWindow != w) {
-        m_previousActiveWindow = m_lastActivatedWindow;
+        if (!m_activeWindowStack.contains(m_lastActivatedWindow)) {
+            m_activeWindowStack.append(m_lastActivatedWindow);
+        }
+        while (m_activeWindowStack.size() > m_settings.activeWindowHistorySize) {
+            m_activeWindowStack.removeFirst();
+        }
     }
+    // Remove the newly activated window from the stack if it was there.
+    m_activeWindowStack.removeAll(w);
     m_lastActivatedWindow = w;
     ManagedWindow *managed = record(w);
     if (!managed || modeOf(*managed) != WindowMode::Canvas) {

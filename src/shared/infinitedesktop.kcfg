@@ -197,6 +197,13 @@
             <whatsthis>When a window outside the visible area is activated, for example from the task bar or with Alt+Tab, the canvas moves so that the window becomes visible.</whatsthis>
             <default>true</default>
         </entry>
+        <entry name="ActiveWindowHistorySize" type="Int">
+            <label>Remembered previous windows</label>
+            <whatsthis>How many previously active windows are remembered for "return to previous window on close".</whatsthis>
+            <default>5</default>
+            <min>1</min>
+            <max>20</max>
+        </entry>
         <entry name="RestorePreviousWindowOnClose" type="Bool">
             <label>Return to previous window on close</label>
             <whatsthis>When a window that was activated (for example a newly opened one) closes, the camera returns to the window that was active before it.</whatsthis>

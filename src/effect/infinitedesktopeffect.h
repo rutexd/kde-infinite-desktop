@@ -80,6 +80,7 @@ struct EffectSettings
     qreal keyboardPanStep = 0.25;
     bool revealOnActivate = true;
     bool restorePreviousWindowOnClose = true;
+    int activeWindowHistorySize = 5;
     bool revealOnWindowClick = false;
     RevealMode revealMode = RevealMode::Minimal;
     bool newWindowsExitZoom = true;
@@ -637,7 +638,7 @@ private:
     KWin::Region m_paintRegion;
     bool m_canvasLayerPainted = false;
     std::optional<MoveState> m_move;
-    QPointer<KWin::EffectWindow> m_previousActiveWindow;
+    QList<QPointer<KWin::EffectWindow>> m_activeWindowStack;
     QPointer<KWin::EffectWindow> m_lastActivatedWindow;
     struct ElectricBorders
     {

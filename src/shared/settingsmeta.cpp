@@ -62,6 +62,7 @@ const QList<SettingsEntryMeta> &settingsEntries()
         // Windows
         {"RevealOnActivate", "windows", nullptr, kli18n("taskbar,alt tab,activate,follow,jump"), nullptr},
         {"RestorePreviousWindowOnClose", "windows", nullptr, kli18n("close,return,previous,window,activate"), "RevealOnActivate"},
+        {"ActiveWindowHistorySize", "windows", " ", kli18n("history,previous,stack,size"), "RestorePreviousWindowOnClose"},
         {"RevealOnWindowClick", "windows", nullptr, kli18n("click,activate,follow,jump,window"), "RevealOnActivate"},
         {"RevealMode", "windows", nullptr, kli18n("center,scroll,follow"), "RevealOnActivate"},
         {"NewWindowsExitZoom", "windows", nullptr, kli18n("open,launch,new,zoom"), nullptr},
