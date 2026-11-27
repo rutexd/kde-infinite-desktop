@@ -1129,35 +1129,49 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
     QPointer<KWin::EffectWindow> guard(w);
     // Activation can come together with a desktop switch; let KWin finish it first.
     QTimer::singleShot(0, this, [this, guard]() {
+        if (guard) {
+            revealActiveWindow(guard.data());
+        }
+    });
+
+    // Reveal again whenever the window's geometry changes (resize/move settling),
+    // so the camera follows the final size instead of a stale one.
+    QObject::connect(w, &KWin::EffectWindow::windowFrameGeometryChanged, this, [this, guard](KWin::EffectWindow *, const KWin::RectF &) {
         if (!guard) {
             return;
         }
-        ManagedWindow *managed = record(guard.data());
-        if (!managed || modeOf(*managed) != WindowMode::Canvas || KWin::effects->activeWindow() != guard.data()) {
-            return;
-        }
-        Canvas *canvas = canvasByKey(managed->canvasKey);
-        if (!canvas || !isCurrentCanvas(*canvas) || canvas->interactions > 0) {
-            return;
-        }
-        // Just stopped a glide by clicking the window: do not immediately re-reveal/animate.
-        if (Clock::now() - managed->lastGlideStop < std::chrono::milliseconds(1500)) {
-            return;
-        }
-        if (canvas->navigation && managed->mappedAt && Clock::now() - *managed->mappedAt < NewWindowActivation) {
-            // A window activating itself as it opens (Steam, Wine/Proton launchers): whether
-            // that ends the zoom is up to the new window rule (adoptWindow), not to this one.
-            qCDebug(KWIN_INFINITEDESKTOP) << "new window" << guard->caption() << "activated while zoomed out, left to the new window rule";
-            return;
-        }
-        KWin::LogicalOutput *output = outputOf(*canvas);
-        const Camera base = targetCamera(*canvas);
-        const QRectF rect = canvasRect(*managed);
-        if (!canvas->navigation && !managed->parked && isFullyVisible(base, rect, outputRect(output), workArea(output))) {
-            return;
-        }
-        animateTo(*canvas, revealCamera(base, rect, outputRect(output), workArea(output), m_settings.revealMode, RevealMargin, 1.0));
-    });
+        QTimer::singleShot(50, this, [this, guard]() {
+            if (guard) {
+                revealActiveWindow(guard.data());
+            }
+        });
+    }, Qt::UniqueConnection);
+}
+
+void InfiniteDesktopEffect::revealActiveWindow(KWin::EffectWindow *w)
+{
+    if (!w || !isOperational() || !m_settings.revealOnActivate) {
+        return;
+    }
+    ManagedWindow *managed = record(w);
+    if (!managed || modeOf(*managed) != WindowMode::Canvas || KWin::effects->activeWindow() != w) {
+        return;
+    }
+    Canvas *canvas = canvasByKey(managed->canvasKey);
+    if (!canvas || !isCurrentCanvas(*canvas) || canvas->interactions > 0) {
+        return;
+    }
+    if (canvas->navigation && managed->mappedAt && Clock::now() - *managed->mappedAt < NewWindowActivation) {
+        qCDebug(KWIN_INFINITEDESKTOP) << "new window" << w->caption() << "activated while zoomed out, left to the new window rule";
+        return;
+    }
+    KWin::LogicalOutput *output = outputOf(*canvas);
+    const Camera base = targetCamera(*canvas);
+    const QRectF rect = canvasRect(*managed);
+    if (!canvas->navigation && !managed->parked && isFullyVisible(base, rect, outputRect(output), workArea(output))) {
+        return;
+    }
+    animateTo(*canvas, revealCamera(base, rect, outputRect(output), workArea(output), m_settings.revealMode, RevealMargin, 1.0));
 }
 
 void InfiniteDesktopEffect::slotFrameGeometryChanged(KWin::EffectWindow *w, const KWin::RectF &oldGeometry)

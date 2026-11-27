@@ -573,6 +573,7 @@ private:
     void slotWindowClosed(KWin::EffectWindow *w);
     void slotWindowDeleted(KWin::EffectWindow *w);
     void slotWindowActivated(KWin::EffectWindow *w);
+    void revealActiveWindow(KWin::EffectWindow *w);
     void slotFrameGeometryChanged(KWin::EffectWindow *w, const KWin::RectF &oldGeometry);
     void slotStartUserMovedResized(KWin::EffectWindow *w);
     void slotFinishUserMovedResized(KWin::EffectWindow *w);

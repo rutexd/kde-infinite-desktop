@@ -221,7 +221,7 @@
                 <choice name="Minimal"><label>Scroll just enough</label></choice>
                 <choice name="Center"><label>Center the window</label></choice>
             </choices>
-            <default>Minimal</default>
+            <default>Center</default>
         </entry>
         <entry name="NewWindowsExitZoom" type="Bool">
             <label>New windows return to 100 %</label>
