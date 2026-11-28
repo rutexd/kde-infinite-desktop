@@ -1036,6 +1036,29 @@ void InfiniteDesktopEffect::slotWindowAdded(KWin::EffectWindow *w)
 {
     setupWindow(w);
     adoptWindow(w, true);
+    m_unrevealedWindows.insert(w);
+    // Try to reveal immediately; geometry changes will re-trigger if needed.
+    QTimer::singleShot(0, this, [this, w]() { revealWindow(w, false); });
+    // Reveal (re-center) when a window's geometry settles, even if it is not the
+    // active window (e.g. Discord's main window appearing after its splash).
+    if (!m_revealConnections.contains(w)) {
+        QMetaObject::Connection conn = QObject::connect(w, &KWin::EffectWindow::windowFrameGeometryChanged, this, [this, w](KWin::EffectWindow *, const KWin::RectF &) {
+            ManagedWindow *managed = record(w);
+            if (!managed || managed->gliding) {
+                return;
+            }
+            if (managed->window && (managed->window->isInteractiveMove() || managed->window->isInteractiveResize())) {
+                return;
+            }
+            // Only auto-reveal windows that have not been revealed yet (newly added),
+            // so user-driven moves/resizes do not yank the camera.
+            if (!m_unrevealedWindows.contains(w)) {
+                return;
+            }
+            revealWindow(w, false);
+        });
+        m_revealConnections.insert(w, conn);
+    }
     if (m_x11Input && isLoneX11Popup(w)) {
         // Menus of Steam (CEF) and Wine are override-redirect windows without
         // WM_TRANSIENT_FOR. Zoomed out only the X11 window with the pointer is on a
@@ -1095,6 +1118,10 @@ void InfiniteDesktopEffect::slotWindowClosed(KWin::EffectWindow *w)
 
 void InfiniteDesktopEffect::slotWindowDeleted(KWin::EffectWindow *w)
 {
+    if (m_revealConnections.contains(w)) {
+        QObject::disconnect(m_revealConnections.take(w));
+    }
+    m_unrevealedWindows.remove(w);
     m_x11Popups.remove(w);
     forgetWindow(w);
     updateActivity();
@@ -1136,25 +1163,31 @@ void InfiniteDesktopEffect::slotWindowActivated(KWin::EffectWindow *w)
 
     // Reveal again whenever the window's geometry changes (resize/move settling),
     // so the camera follows the final size instead of a stale one.
-    QObject::connect(w, &KWin::EffectWindow::windowFrameGeometryChanged, this, [this, guard](KWin::EffectWindow *, const KWin::RectF &) {
-        if (!guard) {
-            return;
-        }
-        QTimer::singleShot(50, this, [this, guard]() {
-            if (guard) {
-                revealActiveWindow(guard.data());
+    if (!m_revealConnections.contains(w)) {
+        QMetaObject::Connection conn = QObject::connect(w, &KWin::EffectWindow::windowFrameGeometryChanged, this, [this, guard](KWin::EffectWindow *, const KWin::RectF &) {
+            if (!guard) {
+                return;
             }
+            QTimer::singleShot(50, this, [this, guard]() {
+                if (guard) {
+                    revealActiveWindow(guard.data());
+                }
+            });
         });
-    }, Qt::UniqueConnection);
+        m_revealConnections.insert(w, conn);
+    }
 }
 
-void InfiniteDesktopEffect::revealActiveWindow(KWin::EffectWindow *w)
+void InfiniteDesktopEffect::revealWindow(KWin::EffectWindow *w, bool requireActive)
 {
     if (!w || !isOperational() || !m_settings.revealOnActivate) {
         return;
     }
     ManagedWindow *managed = record(w);
-    if (!managed || modeOf(*managed) != WindowMode::Canvas || KWin::effects->activeWindow() != w) {
+    if (!managed || modeOf(*managed) != WindowMode::Canvas) {
+        return;
+    }
+    if (requireActive && KWin::effects->activeWindow() != w) {
         return;
     }
     Canvas *canvas = canvasByKey(managed->canvasKey);
@@ -1169,9 +1202,15 @@ void InfiniteDesktopEffect::revealActiveWindow(KWin::EffectWindow *w)
     const Camera base = targetCamera(*canvas);
     const QRectF rect = canvasRect(*managed);
     if (!canvas->navigation && !managed->parked && isFullyVisible(base, rect, outputRect(output), workArea(output))) {
+        m_unrevealedWindows.remove(w);
         return;
     }
     animateTo(*canvas, revealCamera(base, rect, outputRect(output), workArea(output), m_settings.revealMode, RevealMargin, 1.0));
+}
+
+void InfiniteDesktopEffect::revealActiveWindow(KWin::EffectWindow *w)
+{
+    revealWindow(w, true);
 }
 
 void InfiniteDesktopEffect::slotFrameGeometryChanged(KWin::EffectWindow *w, const KWin::RectF &oldGeometry)

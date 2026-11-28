@@ -574,6 +574,7 @@ private:
     void slotWindowDeleted(KWin::EffectWindow *w);
     void slotWindowActivated(KWin::EffectWindow *w);
     void revealActiveWindow(KWin::EffectWindow *w);
+    void revealWindow(KWin::EffectWindow *w, bool requireActive);
     void slotFrameGeometryChanged(KWin::EffectWindow *w, const KWin::RectF &oldGeometry);
     void slotStartUserMovedResized(KWin::EffectWindow *w);
     void slotFinishUserMovedResized(KWin::EffectWindow *w);
@@ -640,6 +641,8 @@ private:
     bool m_canvasLayerPainted = false;
     std::optional<MoveState> m_move;
     QList<QPointer<KWin::EffectWindow>> m_activeWindowStack;
+    QHash<KWin::EffectWindow*, QMetaObject::Connection> m_revealConnections;
+    QSet<KWin::EffectWindow*> m_unrevealedWindows;
     QPointer<KWin::EffectWindow> m_lastActivatedWindow;
     struct ElectricBorders
     {
